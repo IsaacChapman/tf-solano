@@ -1,0 +1,23 @@
+# Enable docker daemon
+system:
+  docker: true
+
+# Only one worker needed
+worker_limit: 1
+
+hooks:
+  # Pull latest TensorFlow docker image (dependent images will be cached by default)
+  pre_setup: sudo docker pull gcr.io/tensorflow/tensorflow:latest
+
+timeout: 5400 # Training can take a substantial amount of time (default 900 seconds)
+
+tests:
+  - |
+    set -e
+    # Run "quick" self test before running longer test and attach outputs separately to test
+    sudo docker run gcr.io/tensorflow/tensorflow:latest \
+      python -m tensorflow.models.image.mnist.convolutional --self_test \
+      | tee $HOME/results/$TDDIUM_SESSION_ID/$TDDIUM_TEST_EXEC_ID/self_test.txt
+    sudo docker run gcr.io/tensorflow/tensorflow:latest \
+      python -m tensorflow.models.image.mnist.convolutional \
+      | tee $HOME/results/$TDDIUM_SESSION_ID/$TDDIUM_TEST_EXEC_ID/full_test.txt
